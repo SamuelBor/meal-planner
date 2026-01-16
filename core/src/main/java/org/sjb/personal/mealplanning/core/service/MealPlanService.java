@@ -139,6 +139,12 @@ public class MealPlanService {
                         for (Ingredient ingredient : meal.getIngredients()) {
                             // Check if this ingredient is in the freezer and use it if possible
                             double quantityNeeded = ingredient.getQuantity();
+                            
+                            boolean scalingDown = false;
+                            if (portionsNeeded == 1 && attendees.contains("Samuel") && !attendees.contains("Jessica")) {
+                                quantityNeeded = quantityNeeded / 2.0;
+                            }
+
                             Optional<FreezerItem> freezerIngredient = findFreezerIngredient(freezerItems, ingredient.getName());
                             
                             if (freezerIngredient.isPresent()) {
@@ -165,6 +171,18 @@ public class MealPlanService {
                                 String key = ingredient.getName() + (ingredient.getUnit() != null ? " (" + ingredient.getUnit() + ")" : "");
                                 aggregatedIngredients.merge(key, quantityNeeded, Double::sum);
                             }
+                        }
+                        
+                        // Adjust leftovers if we scaled down
+                        if (portionsNeeded == 1 && attendees.contains("Samuel") && !attendees.contains("Jessica")) {
+                             int scaledCooked = cookedPortions / 2; 
+                             int actualLeftovers = scaledCooked - portionsNeeded; 
+                             
+                             if (actualLeftovers > 0) {
+                                 leftovers.put(meal, actualLeftovers);
+                             } else {
+                                 leftovers.remove(meal);
+                             }
                         }
                     } else if (isFreezerFullMeal(meal, freezerItems)) {
                         // If it's a full meal from freezer, decrement its quantity
@@ -193,9 +211,13 @@ public class MealPlanService {
             }
         }
 
-        writePlanToFile(dailyPlans);
+        writePlanToFile(dailyPlans, aggregatedIngredients);
 
         return new WeeklyPlanResult(dailyPlans, aggregatedIngredients);
+    }
+
+    public void saveModifiedPlan(List<DailyPlan> dailyPlans, Map<String, Double> aggregatedIngredients) {
+        writePlanToFile(dailyPlans, aggregatedIngredients);
     }
 
     public List<SavedMealPlan> getSavedMealPlans() {
@@ -248,6 +270,7 @@ public class MealPlanService {
 
     private Optional<Meal> selectMeal(List<Meal> allMeals, List<FreezerItem> freezerItems, Set<Long> usedMealIds, DayOfWeek day, int portionsNeeded, List<String> attendees, Weather weather) {
         boolean jessicaEating = attendees.contains("Jessica");
+        boolean samuelEating = attendees.contains("Samuel");
 
         List<Meal> candidates = allMeals.stream()
                 .filter(meal -> !usedMealIds.contains(meal.getId()))
@@ -260,7 +283,6 @@ public class MealPlanService {
             List<Meal> weatherFiltered = candidates.stream()
                     .filter(meal -> meal.getWeatherTags() != null && meal.getWeatherTags().contains(weather))
                     .collect(Collectors.toList());
-            // If we have meals matching the weather, prefer them. Otherwise fallback to all candidates.
             if (!weatherFiltered.isEmpty()) {
                 candidates = weatherFiltered;
             }
@@ -268,6 +290,7 @@ public class MealPlanService {
 
         // Filter based on Jessica's preference if she is eating
         if (jessicaEating) {
+            // Standard Jessica Likes filtering
             List<Meal> jessicaLikesCandidates = candidates.stream()
                     .filter(Meal::isJessicaLikes)
                     .collect(Collectors.toList());
@@ -285,6 +308,16 @@ public class MealPlanService {
                     candidates = jessicaDislikesCandidates;
                 }
             }
+        }
+        
+        // Ensure we don't pick a specialty if only Samuel is eating (unless it's the only option)
+        if (portionsNeeded == 1 && samuelEating && !jessicaEating) {
+             List<Meal> nonSpecialties = candidates.stream()
+                     .filter(meal -> !meal.isJessicaSpecialty())
+                     .collect(Collectors.toList());
+             if (!nonSpecialties.isEmpty()) {
+                 candidates = nonSpecialties;
+             }
         }
 
         if (candidates.isEmpty()) {
@@ -339,7 +372,7 @@ public class MealPlanService {
         return false;
     }
 
-    private void writePlanToFile(List<DailyPlan> dailyPlans) {
+    private void writePlanToFile(List<DailyPlan> dailyPlans, Map<String, Double> aggregatedIngredients) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
         String fileName = "meal_plan_" + timestamp + ".txt";
         Path path = Paths.get(MEAL_PLANS_DIRECTORY);
@@ -354,6 +387,16 @@ public class MealPlanService {
                 writer.write("================\n\n");
                 for (DailyPlan plan : dailyPlans) {
                     writer.write(plan.day() + ": " + plan.mealName() + "\n");
+                }
+                
+                writer.write("\nShopping List\n");
+                writer.write("=============\n\n");
+                if (aggregatedIngredients.isEmpty()) {
+                    writer.write("No ingredients needed.\n");
+                } else {
+                    for (Map.Entry<String, Double> entry : aggregatedIngredients.entrySet()) {
+                        writer.write(entry.getKey() + ": " + entry.getValue() + "\n");
+                    }
                 }
             }
         } catch (IOException e) {

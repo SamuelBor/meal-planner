@@ -53,6 +53,29 @@ public class MealPlanController {
         return new WeeklyMealPlanResponseDTO(dailyPlans, result.aggregatedIngredients());
     }
 
+    @Operation(summary = "Save a modified meal plan", description = "Saves a modified meal plan (e.g. with updated shopping list) to a file")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully saved meal plan")
+    })
+    @PostMapping("/save")
+    public void saveMealPlan(@RequestBody WeeklyMealPlanResponseDTO plan) {
+        log.info("Request received to save modified meal plan");
+        
+        // Convert DTO back to service domain objects if needed, or just use the DTO data to write the file.
+        // Since the service's writePlanToFile takes domain objects, we might need to adapt it or create a new method.
+        // For simplicity, let's create a new method in the service that takes the DTO-like structure or just the raw data needed for the file.
+        
+        List<MealPlanService.DailyPlan> dailyPlans = plan.dailyPlans().stream()
+                .map(p -> new MealPlanService.DailyPlan(
+                        p.dayOfWeek(), 
+                        p.meal() != null ? mealMapper.toEntity(p.meal()) : null, 
+                        p.isLeftovers(), 
+                        p.mealName()))
+                .collect(Collectors.toList());
+        
+        mealPlanService.saveModifiedPlan(dailyPlans, plan.aggregatedIngredients());
+    }
+
     @Operation(summary = "Get saved meal plans", description = "Retrieves a list of previously generated meal plans from the file system")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved saved meal plans")

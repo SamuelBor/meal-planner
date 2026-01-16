@@ -16,6 +16,7 @@ interface Meal {
   allowedDays: string[];
   baseServings: number;
   jessicaLikes: boolean;
+  jessicaSpecialty: boolean;
   weatherTags: string[];
 }
 
@@ -40,6 +41,7 @@ export class MealManagerComponent implements OnInit {
       recipeUrl: [''],
       baseServings: [4, [Validators.required, Validators.min(1)]],
       jessicaLikes: [true],
+      jessicaSpecialty: [false],
       allowedDays: this.fb.array([]),
       weatherTags: this.fb.array([]),
       ingredients: this.fb.array([])
@@ -123,7 +125,8 @@ export class MealManagerComponent implements OnInit {
           name: meal.name,
           recipeUrl: meal.recipeUrl,
           baseServings: meal.baseServings,
-          jessicaLikes: meal.jessicaLikes
+          jessicaLikes: meal.jessicaLikes,
+          jessicaSpecialty: meal.jessicaSpecialty
       });
 
       // Populate ingredients
@@ -150,7 +153,7 @@ export class MealManagerComponent implements OnInit {
   cancelEdit() {
       this.showForm = false;
       this.editingMealId = null;
-      this.mealForm.reset({ baseServings: 4, jessicaLikes: true });
+      this.mealForm.reset({ baseServings: 4, jessicaLikes: true, jessicaSpecialty: false });
       this.ingredients.clear();
       this.initFormArrays();
   }

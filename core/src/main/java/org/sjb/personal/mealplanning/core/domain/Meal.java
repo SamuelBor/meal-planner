@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.DayOfWeek;
 import java.util.List;
@@ -34,6 +35,9 @@ public class Meal {
 
     private int baseServings;
     private boolean jessicaLikes;
+    
+    @ColumnDefault("false")
+    private boolean jessicaSpecialty;
     
     @ElementCollection
     @Enumerated(EnumType.STRING)
@@ -93,6 +97,14 @@ public class Meal {
 
     public void setJessicaLikes(boolean jessicaLikes) {
         this.jessicaLikes = jessicaLikes;
+    }
+
+    public boolean isJessicaSpecialty() {
+        return jessicaSpecialty;
+    }
+
+    public void setJessicaSpecialty(boolean jessicaSpecialty) {
+        this.jessicaSpecialty = jessicaSpecialty;
     }
 
     public Set<Weather> getWeatherTags() {

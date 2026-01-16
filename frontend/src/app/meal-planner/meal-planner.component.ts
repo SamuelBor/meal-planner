@@ -41,6 +41,7 @@ export class MealPlannerComponent {
   weeklyPlan: WeeklyPlanResponse | null = null;
   loading = false;
   error: string | null = null;
+  saving = false;
 
   constructor(private http: HttpClient) {
     // Initialize defaults: both eating every day
@@ -85,5 +86,29 @@ export class MealPlannerComponent {
   getAggregatedIngredientsKeys(): string[] {
     if (!this.weeklyPlan || !this.weeklyPlan.aggregatedIngredients) return [];
     return Object.keys(this.weeklyPlan.aggregatedIngredients);
+  }
+
+  removeIngredient(key: string) {
+    if (this.weeklyPlan && this.weeklyPlan.aggregatedIngredients) {
+      delete this.weeklyPlan.aggregatedIngredients[key];
+    }
+  }
+
+  savePlan() {
+    if (!this.weeklyPlan) return;
+
+    this.saving = true;
+
+    this.http.post('/api/meal-plans/save', this.weeklyPlan).subscribe({
+        next: () => {
+            this.saving = false;
+            alert('Plan saved successfully!');
+        },
+        error: (err) => {
+            console.error('Error saving plan', err);
+            this.saving = false;
+            alert('Failed to save plan.');
+        }
+    });
   }
 }

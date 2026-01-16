@@ -23,6 +23,8 @@ public record MealDTO(
     int baseServings,
     @Schema(description = "Whether Jessica likes this meal", example = "true")
     boolean jessicaLikes,
+    @Schema(description = "Whether this is a Jessica specialty (only cooked when both are eating)", example = "false")
+    boolean jessicaSpecialty,
     @Schema(description = "Weather conditions suitable for this meal", example = "[\"COLD\", \"NEUTRAL\"]")
     Set<Weather> weatherTags
 ) {}

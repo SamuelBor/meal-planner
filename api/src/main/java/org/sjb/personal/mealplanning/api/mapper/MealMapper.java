@@ -27,6 +27,7 @@ public class MealMapper {
             meal.getAllowedDays(),
             meal.getBaseServings(),
             meal.isJessicaLikes(),
+            meal.isJessicaSpecialty(),
             meal.getWeatherTags()
         );
     }
@@ -46,6 +47,7 @@ public class MealMapper {
         meal.setAllowedDays(dto.allowedDays());
         meal.setBaseServings(dto.baseServings());
         meal.setJessicaLikes(dto.jessicaLikes());
+        meal.setJessicaSpecialty(dto.jessicaSpecialty());
         meal.setWeatherTags(dto.weatherTags());
         return meal;
     }

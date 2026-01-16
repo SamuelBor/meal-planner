@@ -1,0 +1,131 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-gray-800">Manage Meals</h2>
+    <button (click)="showForm = !showForm; editingMealId = null; mealForm.reset({ baseServings: 4, jessicaLikes: true }); ingredients.clear(); initFormArrays()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      {{ showForm ? 'Cancel' : 'Add New Meal' }}
+    </button>
+  </div>
+
+  <!-- Add/Edit Meal Form -->
+  <div *ngIf="showForm" class="bg-white shadow rounded-lg p-6 border-2 border-indigo-100">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ editingMealId ? 'Edit Meal' : 'Add New Meal' }}</h3>
+    <form [formGroup]="mealForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Meal Name</label>
+          <input type="text" formControlName="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Recipe URL</label>
+          <input type="text" formControlName="recipeUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Base Servings</label>
+          <input type="number" formControlName="baseServings" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+        </div>
+      </div>
+
+      <div class="flex space-x-4">
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" formControlName="jessicaLikes" class="rounded text-indigo-600 focus:ring-indigo-500">
+          <span class="text-sm text-gray-700">Jessica Likes This</span>
+        </label>
+      </div>
+
+      <!-- Allowed Days -->
+      <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Allowed Days</label>
+          <div class="flex flex-wrap gap-2" formArrayName="allowedDays">
+              <label *ngFor="let day of allowedDays.controls; let i=index" class="cursor-pointer">
+                  <input type="checkbox" [formControlName]="i" class="peer sr-only">
+                  <span class="px-3 py-1 rounded-full text-sm font-medium border transition-colors peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+                      {{ daysOfWeek[i] | titlecase }}
+                  </span>
+              </label>
+          </div>
+      </div>
+
+      <!-- Weather Tags -->
+      <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Suitable Weather</label>
+          <div class="flex flex-wrap gap-2" formArrayName="weatherTags">
+              <label *ngFor="let weather of weatherTags.controls; let i=index" class="cursor-pointer">
+                  <input type="checkbox" [formControlName]="i" class="peer sr-only">
+                  <span class="px-3 py-1 rounded-full text-sm font-medium border transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        [ngClass]="{
+                          'peer-checked:bg-orange-500 peer-checked:text-white peer-checked:border-orange-500': weatherOptions[i] === 'HOT',
+                          'peer-checked:bg-gray-500 peer-checked:text-white peer-checked:border-gray-500': weatherOptions[i] === 'NEUTRAL',
+                          'peer-checked:bg-blue-500 peer-checked:text-white peer-checked:border-blue-500': weatherOptions[i] === 'COLD'
+                        }">
+                      {{ weatherOptions[i] | titlecase }}
+                  </span>
+              </label>
+          </div>
+      </div>
+
+      <!-- Ingredients Section -->
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-sm font-medium text-gray-700">Ingredients</label>
+          <button type="button" (click)="addIngredient()" class="text-sm text-indigo-600 hover:text-indigo-800">+ Add Ingredient</button>
+        </div>
+        <div formArrayName="ingredients" class="space-y-2">
+          <div *ngFor="let ingredient of ingredients.controls; let i=index" [formGroupName]="i" class="flex space-x-2 items-center">
+            <input type="text" formControlName="name" placeholder="Name" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+            <input type="number" formControlName="quantity" placeholder="Qty" class="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+            <input type="text" formControlName="unit" placeholder="Unit" class="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+            <button type="button" (click)="removeIngredient(i)" class="text-red-600 hover:text-red-800">X</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 flex space-x-4">
+        <button type="submit" [disabled]="!mealForm.valid || loading" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 flex items-center justify-center">
+          <span *ngIf="loading" class="mr-2">
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </span>
+          {{ editingMealId ? 'Update Meal' : 'Save Meal' }}
+        </button>
+        <button type="button" (click)="cancelEdit()" [disabled]="loading" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !showForm" class="flex justify-center py-8">
+    <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <!-- Meals List -->
+  <div *ngIf="!loading || showForm" class="bg-white shadow overflow-hidden sm:rounded-md">
+    <ul class="divide-y divide-gray-200">
+      <li *ngFor="let meal of meals" class="px-6 py-4 hover:bg-gray-50 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-medium text-gray-900">{{ meal.name }}</h3>
+          <p class="text-sm text-gray-500">
+            Serves: {{ meal.baseServings }} | Ingredients: {{ meal.ingredients.length || 0 }}
+            <span *ngIf="meal.weatherTags && meal.weatherTags.length > 0" class="ml-2 text-xs text-gray-400">
+              ({{ meal.weatherTags.join(', ') }})
+            </span>
+          </p>
+        </div>
+        <div class="flex space-x-2">
+            <a *ngIf="meal.recipeUrl" [href]="meal.recipeUrl" target="_blank" class="text-indigo-600 hover:text-indigo-900 text-sm">View Recipe</a>
+            <button (click)="startEdit(meal)" class="text-indigo-600 hover:text-indigo-900 text-sm ml-4">Edit</button>
+            <button (click)="deleteMeal(meal.id!)" class="text-red-600 hover:text-red-900 text-sm ml-2">Delete</button>
+        </div>
+      </li>
+      <li *ngIf="meals.length === 0 && !loading" class="px-6 py-4 text-center text-gray-500">
+        No meals found. Add one to get started!
+      </li>
+    </ul>
+  </div>
+</div>

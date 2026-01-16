@@ -1,0 +1,45 @@
+<div class="flex h-[calc(100vh-8rem)]">
+  <!-- Sidebar List -->
+  <div class="w-1/3 bg-white shadow rounded-lg overflow-hidden flex flex-col mr-6">
+    <div class="p-4 border-b bg-gray-50">
+      <h2 class="text-lg font-bold text-gray-800">Saved Plans</h2>
+    </div>
+    <div class="overflow-y-auto flex-1">
+      <ul class="divide-y divide-gray-200">
+        <li *ngFor="let plan of savedPlans"
+            (click)="selectPlan(plan)"
+            class="px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-colors duration-150"
+            [class.bg-indigo-100]="selectedPlan === plan">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-900 truncate">{{ formatDate(plan.fileName) }}</span>
+            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </li>
+        <li *ngIf="savedPlans.length === 0 && !loading" class="px-4 py-8 text-center text-gray-500 text-sm">
+          No saved plans found.
+        </li>
+        <li *ngIf="loading" class="px-4 py-8 text-center text-gray-500 text-sm">
+          Loading...
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Content Viewer -->
+  <div class="w-2/3 bg-white shadow rounded-lg p-6 overflow-y-auto">
+    <div *ngIf="selectedPlan; else noSelection">
+      <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">{{ formatDate(selectedPlan.fileName) }}</h3>
+      <pre class="whitespace-pre-wrap font-mono text-sm text-gray-700 bg-gray-50 p-4 rounded border">{{ selectedPlan.content }}</pre>
+    </div>
+    <ng-template #noSelection>
+      <div class="h-full flex flex-col items-center justify-center text-gray-400">
+        <svg class="h-16 w-16 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="text-lg">Select a plan to view details</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

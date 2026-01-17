@@ -1,13 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-interface FreezerItem {
-  id?: number;
-  name: string;
-  quantity: number;
-  isFullMeal: boolean;
-}
+import { FreezerService, FreezerItem } from '../services/freezer.service';
 
 @Component({
   selector: 'app-freezer-manager',
@@ -21,7 +14,7 @@ export class FreezerManagerComponent implements OnInit {
   showForm = false;
   loading = false;
 
-  constructor(private http: HttpClient, private fb: FormBuilder) {
+  constructor(private freezerService: FreezerService, private fb: FormBuilder) {
     this.itemForm = this.fb.group({
       name: ['', Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]],
@@ -35,7 +28,7 @@ export class FreezerManagerComponent implements OnInit {
 
   loadItems() {
     this.loading = true;
-    this.http.get<FreezerItem[]>('/api/freezer').subscribe({
+    this.freezerService.getAllItems().subscribe({
       next: (data) => {
         this.freezerItems = data.sort((a, b) => a.name.localeCompare(b.name));
         this.loading = false;
@@ -49,7 +42,7 @@ export class FreezerManagerComponent implements OnInit {
   onSubmit() {
     if (this.itemForm.valid) {
       this.loading = true;
-      this.http.post<FreezerItem>('/api/freezer', this.itemForm.value).subscribe({
+      this.freezerService.addItem(this.itemForm.value).subscribe({
         next: () => {
           this.loadItems();
           this.showForm = false;
@@ -65,7 +58,7 @@ export class FreezerManagerComponent implements OnInit {
   deleteItem(id: number) {
     if(confirm('Are you sure?')) {
       this.loading = true;
-      this.http.delete(`/api/freezer/${id}`).subscribe({
+      this.freezerService.deleteItem(id).subscribe({
         next: () => this.loadItems(),
         error: () => {
           this.loading = false;

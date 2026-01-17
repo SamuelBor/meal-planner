@@ -1,10 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
-interface SavedMealPlan {
-  fileName: string;
-  content: string;
-}
+import { MealPlanService, SavedMealPlan } from '../services/meal-plan.service';
 
 @Component({
   selector: 'app-saved-plans',
@@ -17,10 +12,10 @@ export class SavedPlansComponent implements OnInit {
   selectedPlan: SavedMealPlan | null = null;
   loading = true;
 
-  constructor(private http: HttpClient) {}
+  constructor(private mealPlanService: MealPlanService) {}
 
   ngOnInit(): void {
-    this.http.get<SavedMealPlan[]>('/api/meal-plans/saved').subscribe({
+    this.mealPlanService.getSavedPlans().subscribe({
       next: (data) => {
         this.savedPlans = data;
         this.loading = false;
@@ -40,10 +35,6 @@ export class SavedPlansComponent implements OnInit {
     // Extract timestamp from filename: meal_plan_2023-10-27T10-30-00.txt
     const match = fileName.match(/meal_plan_(.*)\.txt/);
     if (match && match[1]) {
-      const dateStr = match[1].replace(/-/g, ':').replace('T', ' ').replace(/:/g, '-').replace(' ', 'T');
-      // The above replacement logic is a bit hacky to reverse the filename format back to something readable
-      // Let's just return the raw string or try to parse it if needed.
-      // Actually, let's just replace the T with a space and the hyphens in time with colons for display
       const parts = match[1].split('T');
       if (parts.length === 2) {
           return `${parts[0]} ${parts[1].replace(/-/g, ':')}`;

@@ -1,24 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormArray, Validators, FormControl } from '@angular/forms';
-
-interface Ingredient {
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-interface Meal {
-  id?: number;
-  name: string;
-  ingredients: Ingredient[];
-  recipeUrl: string;
-  allowedDays: string[];
-  baseServings: number;
-  jessicaLikes: boolean;
-  jessicaSpecialty: boolean;
-  weatherTags: string[];
-}
+import { MealService, Meal } from '../services/meal.service';
 
 @Component({
   selector: 'app-meal-manager',
@@ -35,7 +17,7 @@ export class MealManagerComponent implements OnInit {
   weatherOptions = ['HOT', 'NEUTRAL', 'COLD'];
   loading = false;
 
-  constructor(private http: HttpClient, private fb: FormBuilder) {
+  constructor(private mealService: MealService, private fb: FormBuilder) {
     this.mealForm = this.fb.group({
       name: ['', Validators.required],
       recipeUrl: [''],
@@ -71,7 +53,7 @@ export class MealManagerComponent implements OnInit {
 
   loadMeals() {
     this.loading = true;
-    this.http.get<Meal[]>('/api/meals').subscribe({
+    this.mealService.getAllMeals().subscribe({
       next: (data) => {
         this.meals = data.sort((a, b) => a.name.localeCompare(b.name));
         this.loading = false;
@@ -173,14 +155,14 @@ export class MealManagerComponent implements OnInit {
         .map((checked: boolean, i: number) => checked ? this.weatherOptions[i] : null)
         .filter((v: string | null) => v !== null);
 
-      const payload = {
+      const payload: Meal = {
           ...formValue,
           allowedDays: selectedDays,
           weatherTags: selectedWeather
       };
 
       if (this.editingMealId) {
-          this.http.put<Meal>(`/api/meals/${this.editingMealId}`, payload).subscribe({
+          this.mealService.updateMeal(this.editingMealId, payload).subscribe({
               next: () => {
                   this.loadMeals();
                   this.cancelEdit();
@@ -190,7 +172,7 @@ export class MealManagerComponent implements OnInit {
               }
           });
       } else {
-          this.http.post<Meal>('/api/meals', payload).subscribe({
+          this.mealService.createMeal(payload).subscribe({
               next: () => {
                   this.loadMeals();
                   this.cancelEdit();
@@ -206,7 +188,7 @@ export class MealManagerComponent implements OnInit {
   deleteMeal(id: number) {
       if(confirm('Are you sure?')) {
           this.loading = true;
-          this.http.delete(`/api/meals/${id}`).subscribe({
+          this.mealService.deleteMeal(id).subscribe({
               next: () => this.loadMeals(),
               error: () => {
                   this.loading = false;

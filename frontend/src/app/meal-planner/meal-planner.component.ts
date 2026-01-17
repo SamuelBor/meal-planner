@@ -1,27 +1,5 @@
 import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
-interface Ingredient {
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-interface DailyPlan {
-  dayOfWeek: string;
-  meal: {
-    name: string;
-    recipeUrl?: string;
-    ingredients?: Ingredient[];
-  } | null;
-  isLeftovers: boolean;
-  mealName: string;
-}
-
-interface WeeklyPlanResponse {
-  dailyPlans: DailyPlan[];
-  aggregatedIngredients: { [key: string]: number };
-}
+import { MealPlanService, WeeklyPlanResponse } from '../services/meal-plan.service';
 
 @Component({
   selector: 'app-meal-planner',
@@ -43,7 +21,7 @@ export class MealPlannerComponent {
   error: string | null = null;
   saving = false;
 
-  constructor(private http: HttpClient) {
+  constructor(private mealPlanService: MealPlanService) {
     // Initialize defaults: both eating every day
     this.daysOfWeek.forEach(day => {
       this.attendees[day] = { Samuel: true, Jessica: true };
@@ -70,7 +48,7 @@ export class MealPlannerComponent {
         weather: this.selectedWeather
     };
 
-    this.http.post<WeeklyPlanResponse>('/api/meal-plans', request).subscribe({
+    this.mealPlanService.generatePlan(request).subscribe({
       next: (response) => {
         this.weeklyPlan = response;
         this.loading = false;
@@ -99,7 +77,7 @@ export class MealPlannerComponent {
 
     this.saving = true;
 
-    this.http.post('/api/meal-plans/save', this.weeklyPlan).subscribe({
+    this.mealPlanService.savePlan(this.weeklyPlan).subscribe({
         next: () => {
             this.saving = false;
             alert('Plan saved successfully!');

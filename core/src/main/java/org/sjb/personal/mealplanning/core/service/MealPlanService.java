@@ -61,6 +61,9 @@ public class MealPlanService {
         days.add(DayOfWeek.SATURDAY);
         
         boolean treatNightUsed = false;
+        
+        // Keep track of recently used meal names to avoid similarity
+        List<String> recentMealNames = new ArrayList<>();
 
         for (DayOfWeek day : days) {
             List<String> attendees = weeklyAttendees.getOrDefault(day, Collections.emptyList());
@@ -82,6 +85,7 @@ public class MealPlanService {
                         leftovers.remove(meal);
                     }
                     dailyPlans.add(new DailyPlan(day, meal, true, meal.getName() + " (Leftovers)"));
+                    recentMealNames.add(meal.getName());
                 } else {
                     // No leftovers, Jessica sorts herself out
                     dailyPlans.add(new DailyPlan(day, null, false, "Jessica sorting her dinner"));
@@ -114,9 +118,10 @@ public class MealPlanService {
                     leftovers.remove(meal);
                 }
                 dailyPlans.add(new DailyPlan(day, meal, true, meal.getName() + " (Leftovers)"));
+                recentMealNames.add(meal.getName());
             } else {
                 // Cook a new meal or use freezer meal
-                Optional<Meal> selectedMealOpt = selectMeal(allMeals, freezerItems, usedMealIds, day, portionsNeeded, attendees, weather);
+                Optional<Meal> selectedMealOpt = selectMeal(allMeals, freezerItems, usedMealIds, day, portionsNeeded, attendees, weather, recentMealNames);
                 
                 if (selectedMealOpt.isPresent()) {
                     Meal meal = selectedMealOpt.get();
@@ -205,6 +210,7 @@ public class MealPlanService {
                     }
                     
                     dailyPlans.add(new DailyPlan(day, meal, false, meal.getName()));
+                    recentMealNames.add(meal.getName());
                 } else {
                     dailyPlans.add(new DailyPlan(day, null, false, "No suitable meal found"));
                 }
@@ -268,7 +274,7 @@ public class MealPlanService {
                 .findFirst();
     }
 
-    private Optional<Meal> selectMeal(List<Meal> allMeals, List<FreezerItem> freezerItems, Set<Long> usedMealIds, DayOfWeek day, int portionsNeeded, List<String> attendees, Weather weather) {
+    private Optional<Meal> selectMeal(List<Meal> allMeals, List<FreezerItem> freezerItems, Set<Long> usedMealIds, DayOfWeek day, int portionsNeeded, List<String> attendees, Weather weather, List<String> recentMealNames) {
         boolean jessicaEating = attendees.contains("Jessica");
         boolean samuelEating = attendees.contains("Samuel");
 
@@ -276,6 +282,7 @@ public class MealPlanService {
                 .filter(meal -> !usedMealIds.contains(meal.getId()))
                 .filter(meal -> meal.getAllowedDays() == null || meal.getAllowedDays().isEmpty() || meal.getAllowedDays().contains(day))
                 .filter(meal -> meal.getBaseServings() >= portionsNeeded)
+                .filter(meal -> !isTooSimilar(meal.getName(), recentMealNames)) // Check similarity
                 .collect(Collectors.toList());
 
         // Filter by weather if specified
@@ -298,13 +305,12 @@ public class MealPlanService {
                 candidates = jessicaLikesCandidates;
             }
         } else {
-            // Jessica is NOT eating. Prioritize meals she DOESN'T like
             List<Meal> jessicaDislikesCandidates = candidates.stream()
                     .filter(meal -> !meal.isJessicaLikes())
                     .collect(Collectors.toList());
             
             if (!jessicaDislikesCandidates.isEmpty()) {
-                if (random.nextDouble() < 0.8) { 
+                if (random.nextDouble() < 0.45) {
                     candidates = jessicaDislikesCandidates;
                 }
             }
@@ -330,6 +336,7 @@ public class MealPlanService {
             List<FreezerItem> fullMealsInFreezer = freezerItems.stream()
                     .filter(FreezerItem::isFullMeal)
                     .filter(item -> item.getQuantity() >= portionsNeeded)
+                    .filter(item -> !isTooSimilar(item.getName(), recentMealNames)) // Check similarity for freezer meals too
                     .collect(Collectors.toList());
 
             if (!fullMealsInFreezer.isEmpty() && random.nextBoolean()) {
@@ -352,6 +359,35 @@ public class MealPlanService {
 
         // Fallback to random selection from filtered candidates
         return Optional.of(candidates.get(random.nextInt(candidates.size())));
+    }
+    
+    private boolean isTooSimilar(String mealName, List<String> recentMealNames) {
+        if (recentMealNames.isEmpty()) {
+            return false;
+        }
+        
+        // Get the last meal name (most recent)
+        String lastMealName = recentMealNames.get(recentMealNames.size() - 1);
+        
+        // Words to ignore
+        Set<String> ignoredWords = Set.of("chicken", "rice", "noodles", "with", "and", "&", "a", "the");
+        
+        Set<String> currentWords = Arrays.stream(mealName.toLowerCase().split("\\s+"))
+                .filter(w -> !ignoredWords.contains(w))
+                .collect(Collectors.toSet());
+                
+        Set<String> lastWords = Arrays.stream(lastMealName.toLowerCase().split("\\s+"))
+                .filter(w -> !ignoredWords.contains(w))
+                .collect(Collectors.toSet());
+        
+        // Check for intersection
+        for (String word : currentWords) {
+            if (lastWords.contains(word)) {
+                return true; // Found a similar word
+            }
+        }
+        
+        return false;
     }
 
     private boolean mealUsesFreezerIngredient(Meal meal, List<FreezerItem> freezerItems) {

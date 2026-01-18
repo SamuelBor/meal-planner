@@ -21,6 +21,9 @@ export class MealPlannerComponent {
   error: string | null = null;
   saving = false;
 
+  // Track checked state of shopping list items
+  checkedItems: { [key: string]: boolean } = {};
+
   constructor(private mealPlanService: MealPlanService) {
     // Initialize defaults: both eating every day
     this.daysOfWeek.forEach(day => {
@@ -32,6 +35,7 @@ export class MealPlannerComponent {
     this.loading = true;
     this.error = null;
     this.weeklyPlan = null;
+    this.checkedItems = {}; // Reset checked items
 
     // Build request payload
     const weeklyAttendees: { [key: string]: string[] } = {};
@@ -69,7 +73,12 @@ export class MealPlannerComponent {
   removeIngredient(key: string) {
     if (this.weeklyPlan && this.weeklyPlan.aggregatedIngredients) {
       delete this.weeklyPlan.aggregatedIngredients[key];
+      delete this.checkedItems[key]; // Also remove from checked state
     }
+  }
+
+  toggleItem(key: string) {
+      this.checkedItems[key] = !this.checkedItems[key];
   }
 
   savePlan() {

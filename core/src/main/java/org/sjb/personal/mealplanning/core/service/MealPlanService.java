@@ -145,7 +145,6 @@ public class MealPlanService {
                             // Check if this ingredient is in the freezer and use it if possible
                             double quantityNeeded = ingredient.getQuantity();
                             
-                            boolean scalingDown = false;
                             if (portionsNeeded == 1 && attendees.contains("Samuel") && !attendees.contains("Jessica")) {
                                 quantityNeeded = quantityNeeded / 2.0;
                             }
@@ -282,8 +281,23 @@ public class MealPlanService {
                 .filter(meal -> !usedMealIds.contains(meal.getId()))
                 .filter(meal -> meal.getAllowedDays() == null || meal.getAllowedDays().isEmpty() || meal.getAllowedDays().contains(day))
                 .filter(meal -> meal.getBaseServings() >= portionsNeeded)
-                .filter(meal -> !isTooSimilar(meal.getName(), recentMealNames)) // Check similarity
+                .filter(meal -> !isTooSimilar(meal.getName(), recentMealNames))
                 .collect(Collectors.toList());
+
+        // Filter out meals that result in < 1 Pack if scaling down for Samuel only
+        if (portionsNeeded == 1 && samuelEating && !jessicaEating) {
+            candidates = candidates.stream()
+                    .filter(meal -> {
+                        if (meal.getIngredients() == null) return true;
+                        return meal.getIngredients().stream()
+                                .noneMatch(ing -> 
+                                    ing.getUnit() != null && 
+                                    ing.getUnit().equalsIgnoreCase("Pack") && 
+                                    (ing.getQuantity() / 2.0) < 1.0
+                                );
+                    })
+                    .collect(Collectors.toList());
+        }
 
         // Filter by weather if specified
         if (weather != null) {
@@ -310,7 +324,7 @@ public class MealPlanService {
                     .collect(Collectors.toList());
             
             if (!jessicaDislikesCandidates.isEmpty()) {
-                if (random.nextDouble() < 0.45) {
+                if (random.nextDouble() < 0.3) {
                     candidates = jessicaDislikesCandidates;
                 }
             }

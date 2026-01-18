@@ -125,12 +125,13 @@
       </div>
       <ul class="divide-y divide-gray-200">
         <li *ngFor="let key of getAggregatedIngredientsKeys()" class="py-2 flex justify-between items-center group">
-          <div class="flex-1">
-            <span class="text-gray-700">{{ key }}</span>
+          <div class="flex items-center flex-1 cursor-pointer" (click)="toggleItem(key)">
+            <input type="checkbox" [checked]="checkedItems[key]" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3 cursor-pointer">
+            <span class="text-gray-700 transition-all duration-200" [ngClass]="{'line-through text-gray-400 opacity-60': checkedItems[key]}">{{ key }}</span>
           </div>
           <div class="flex items-center">
-            <span class="font-medium text-gray-900 mr-3">{{ weeklyPlan.aggregatedIngredients[key] }}</span>
-            <button (click)="removeIngredient(key)" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove item">
+            <span class="font-medium text-gray-900 mr-3 transition-all duration-200" [ngClass]="{'line-through text-gray-400 opacity-60': checkedItems[key]}">{{ weeklyPlan.aggregatedIngredients[key] }}</span>
+            <button (click)="removeIngredient(key); $event.stopPropagation()" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove item">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>

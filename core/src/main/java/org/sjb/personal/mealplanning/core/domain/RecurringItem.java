@@ -10,24 +10,24 @@ import lombok.Data;
 @Entity
 @Data
 @Builder
-public class FreezerItem {
+public class RecurringItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-    private int quantity;
-    private boolean isFullMeal; // True if it's a full meal (e.g., Turkish Soup), false if it's an ingredient
+    private double quantity;
+    private String unit;
 
-    public FreezerItem() {
+    public RecurringItem() {
     }
 
-    public FreezerItem(Long id, String name, int quantity, boolean isFullMeal) {
+    public RecurringItem(Long id, String name, double quantity, String unit) {
         this.id = id;
         this.name = name;
         this.quantity = quantity;
-        this.isFullMeal = isFullMeal;
+        this.unit = unit;
     }
 
     public Long getId() {
@@ -46,19 +46,19 @@ public class FreezerItem {
         this.name = name;
     }
 
-    public int getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 
-    public boolean isFullMeal() {
-        return isFullMeal;
+    public String getUnit() {
+        return unit;
     }
 
-    public void setFullMeal(boolean fullMeal) {
-        isFullMeal = fullMeal;
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }

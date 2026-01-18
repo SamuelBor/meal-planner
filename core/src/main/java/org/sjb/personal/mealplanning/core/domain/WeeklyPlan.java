@@ -1,10 +1,8 @@
 package org.sjb.personal.mealplanning.core.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,8 +11,6 @@ import java.util.List;
 @Entity
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class WeeklyPlan {
 
     @Id
@@ -25,4 +21,13 @@ public class WeeklyPlan {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduledMeal> scheduledMeals = new ArrayList<>();
+
+    public WeeklyPlan() {
+    }
+
+    public WeeklyPlan(Long id, LocalDate weekStartDate, List<ScheduledMeal> scheduledMeals) {
+        this.id = id;
+        this.weekStartDate = weekStartDate;
+        this.scheduledMeals = scheduledMeals;
+    }
 }

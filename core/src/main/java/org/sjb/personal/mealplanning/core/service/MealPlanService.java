@@ -3,9 +3,11 @@ package org.sjb.personal.mealplanning.core.service;
 import org.sjb.personal.mealplanning.core.domain.FreezerItem;
 import org.sjb.personal.mealplanning.core.domain.Ingredient;
 import org.sjb.personal.mealplanning.core.domain.Meal;
+import org.sjb.personal.mealplanning.core.domain.RecurringItem;
 import org.sjb.personal.mealplanning.core.domain.Weather;
 import org.sjb.personal.mealplanning.core.repository.FreezerItemRepository;
 import org.sjb.personal.mealplanning.core.repository.MealRepository;
+import org.sjb.personal.mealplanning.core.repository.RecurringItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,12 +30,14 @@ public class MealPlanService {
 
     private final MealRepository mealRepository;
     private final FreezerItemRepository freezerItemRepository;
+    private final RecurringItemRepository recurringItemRepository;
     private final Random random = new Random();
     private static final String MEAL_PLANS_DIRECTORY = System.getProperty("user.home") + "/Documents/mealplans";
 
-    public MealPlanService(MealRepository mealRepository, FreezerItemRepository freezerItemRepository) {
+    public MealPlanService(MealRepository mealRepository, FreezerItemRepository freezerItemRepository, RecurringItemRepository recurringItemRepository) {
         this.mealRepository = mealRepository;
         this.freezerItemRepository = freezerItemRepository;
+        this.recurringItemRepository = recurringItemRepository;
     }
 
     public record DailyPlan(DayOfWeek day, Meal meal, boolean isLeftovers, String mealName) {}
@@ -43,9 +47,16 @@ public class MealPlanService {
     public WeeklyPlanResult generateWeeklyPlan(Map<DayOfWeek, List<String>> weeklyAttendees, Weather weather) {
         List<Meal> allMeals = mealRepository.findAll();
         List<FreezerItem> freezerItems = freezerItemRepository.findAll();
+        List<RecurringItem> recurringItems = recurringItemRepository.findAll();
         List<DailyPlan> dailyPlans = new ArrayList<>();
-        Map<String, Double> aggregatedIngredients = new HashMap<>();
+        Map<String, Double> aggregatedIngredients = new LinkedHashMap<>(); // Use LinkedHashMap to preserve order
         Set<Long> usedMealIds = new HashSet<>();
+        
+        // Add recurring items first
+        for (RecurringItem item : recurringItems) {
+            String key = item.getName() + (item.getUnit() != null ? " (" + item.getUnit() + ")" : "");
+            aggregatedIngredients.put(key, item.getQuantity());
+        }
         
         // Track leftovers: Meal -> remaining portions
         Map<Meal, Integer> leftovers = new HashMap<>();

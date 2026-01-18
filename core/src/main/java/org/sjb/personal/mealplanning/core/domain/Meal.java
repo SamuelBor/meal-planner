@@ -1,10 +1,8 @@
 package org.sjb.personal.mealplanning.core.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.DayOfWeek;
@@ -14,8 +12,6 @@ import java.util.Set;
 @Entity
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class Meal {
 
     @Id
@@ -42,6 +38,21 @@ public class Meal {
     @ElementCollection
     @Enumerated(EnumType.STRING)
     private Set<Weather> weatherTags;
+
+    public Meal() {
+    }
+
+    public Meal(Long id, String name, List<Ingredient> ingredients, String recipeUrl, Set<DayOfWeek> allowedDays, int baseServings, boolean jessicaLikes, boolean jessicaSpecialty, Set<Weather> weatherTags) {
+        this.id = id;
+        this.name = name;
+        this.ingredients = ingredients;
+        this.recipeUrl = recipeUrl;
+        this.allowedDays = allowedDays;
+        this.baseServings = baseServings;
+        this.jessicaLikes = jessicaLikes;
+        this.jessicaSpecialty = jessicaSpecialty;
+        this.weatherTags = weatherTags;
+    }
 
     public Long getId() {
         return id;

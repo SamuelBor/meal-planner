@@ -1,18 +1,14 @@
 package org.sjb.personal.mealplanning.core.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.DayOfWeek;
 
 @Entity
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ScheduledMeal {
 
     @Id
@@ -25,4 +21,15 @@ public class ScheduledMeal {
     private DayOfWeek dayOfWeek;
     private int portionsConsumed;
     private int leftoversCreated;
+
+    public ScheduledMeal() {
+    }
+
+    public ScheduledMeal(Long id, Meal meal, DayOfWeek dayOfWeek, int portionsConsumed, int leftoversCreated) {
+        this.id = id;
+        this.meal = meal;
+        this.dayOfWeek = dayOfWeek;
+        this.portionsConsumed = portionsConsumed;
+        this.leftoversCreated = leftoversCreated;
+    }
 }
